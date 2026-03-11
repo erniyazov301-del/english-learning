@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Learning / Home</title>
+    <style>
+        :root {
+            --notion-bg: #ffffff;
+            --notion-text: #37352f;
+            --notion-secondary: rgba(55, 53, 47, 0.65);
+            --notion-hover: rgba(55, 53, 47, 0.08);
+            --notion-border: rgba(55, 53, 47, 0.16);
+            --notion-callout: #f1f1ef;
+            --notion-blue: #2383e2;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif;
+            background: var(--notion-bg);
+            color: var(--notion-text);
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            padding: 80px 40px;
+        }
+
+        /* --- SETUP MODAL --- */
+        #setup-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 1000; display: flex; align-items: center; justify-content: center;
+        }
+        .setup-content { max-width: 400px; width: 90%; }
+
+        /* --- NAVIGATION --- */
+        nav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 40px;
+            border-bottom: 1px solid var(--notion-border);
+            padding-bottom: 10px;
+        }
+        nav button {
+            background: none; border: none; padding: 4px 8px; border-radius: 4px;
+            cursor: pointer; font-size: 14px; color: var(--notion-text);
+        }
+        nav button:hover { background: var(--notion-hover); }
+        nav button.active { font-weight: 600; text-decoration: underline; }
+
+        /* --- UI ELEMENTS --- */
+        h1 { font-size: 40px; font-weight: 700; margin-bottom: 10px; }
+        .callout {
+            background: var(--notion-callout);
+            padding: 16px 20px;
+            border-radius: 4px;
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            align-items: center;
+        }
+        .progress-bar { height: 4px; width: 100%; background: var(--notion-border); margin-bottom: 20px; }
+        .progress-fill { height: 100%; background: var(--notion-text); width: 0%; }
+
+        input[type="text"] {
+            width: 100%; padding: 12px 0; font-size: 18px; border: none;
+            border-bottom: 1px solid var(--notion-border); outline: none;
+            margin-bottom: 20px;
+        }
+
+        select, .btn {
+            padding: 8px 12px; border: 1px solid var(--notion-border);
+            background: white; border-radius: 4px; cursor: pointer;
+        }
+        .btn-primary { background: var(--notion-text); color: white; border: none; font-weight: 500; }
+
+        .flashcard {
+            border: 1px solid var(--notion-border);
+            padding: 60px; text-align: center; font-size: 32px;
+            border-radius: 8px; margin-bottom: 20px;
+        }
+
+        .hidden { display: none !important; }
+
+        /* --- GRAMMAR --- */
+        .lesson { margin-bottom: 32px; }
+        .lesson h3 { border-bottom: 1px solid var(--notion-border); padding-bottom: 4px; }
+        .example { border-left: 2px solid var(--notion-border); padding-left: 12px; color: var(--notion-secondary); }
+    </style>
+</head>
+<body>
+
+<div id="setup-screen" class="hidden">
+    <div class="setup-content">
+        <h1>Getting Started</h1>
+        <p style="color: var(--notion-secondary)">Configure your learning workspace.</p>
+        <div style="margin-top: 20px">
+            <label>English Level</label><br>
+            <select id="lvl-select" style="width: 100%; margin-bottom: 15px;">
+                <option value="A1">A1 - Beginner</option>
+                <option value="B2">B2 - Upper Intermediate</option>
+                <option value="C2">C2 - Mastery</option>
+            </select>
+            <label>Font Size</label><br>
+            <select id="font-select" style="width: 100%; margin-bottom: 30px;">
+                <option value="16px">Small</option>
+                <option value="20px">Default</option>
+                <option value="24px">Large</option>
+            </select>
+            <button class="btn btn-primary" style="width: 100%" onclick="saveSetup()">Enter Workspace</button>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <nav>
+        <button id="nav-tests" class="active" onclick="tab('tests')">Tests</button>
+        <button id="nav-cards" onclick="tab('cards')">Flashcards</button>
+        <button id="nav-grammar" onclick="tab('grammar')">Grammar</button>
+    </nav>
+
+    <div id="view-tests">
+        <h1 id="page-title">Translation Test</h1>
+        <div class="progress-bar"><div class="progress-fill" id="p-bar"></div></div>
+        <p id="p-text" style="color: var(--notion-secondary)">Sentence 1 / 500</p>
+        
+        <div class="callout" id="sentence-box">
+            <span>💡</span>
+            <span id="current-sentence">The cat is on the table.</span>
+        </div>
+
+        <input type="text" id="answer-input" placeholder="Type the translation..." onkeypress="handleKey(event)">
+        <div id="feedback" style="margin-bottom: 20px; font-weight: 500;"></div>
+        <button class="btn btn-primary" onclick="check()">Check</button>
+    </div>
+
+    <div id="view-cards" class="hidden">
+        <h1>Vocabulary</h1>
+        <p style="color: var(--notion-secondary)">Master these words for your level.</p>
+        <div class="flashcard" id="card-text">Persistence</div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn" style="flex: 1" onclick="nextCard(false)">Repeat</button>
+            <button class="btn btn-primary" style="flex: 1" onclick="nextCard(true)">Know</button>
+        </div>
+    </div>
+
+    <div id="view-grammar" class="hidden">
+        <h1>Grammar Reference</h1>
+        <div id="grammar-list"></div>
+    </div>
+</div>
+
+<script>
+    let state = JSON.parse(localStorage.getItem('eng_app')) || { setup: false, level: 'A1', index: 0, font: '20px', known: [] };
+
+    const content = {
+        A1: { s: ["I drink coffee", "He is a doctor", "Where is the station?"], w: ["Apple", "House", "Friend"] },
+        B2: { s: ["I have been waiting for hours", "Despite the rain, we went out"], w: ["Incentive", "Paradigm", "Leverage"] },
+        C2: { s: ["The implications are far-reaching", "He articulated his views eloquently"], w: ["Ethereal", "Quintessential", "Sagacity"] }
+    };
+
+    const grammar = [
+        { t: "Present Simple", d: "Habits and facts.", e: "She works every day." },
+        { t: "Passive Voice", d: "Focus on the object.", e: "The letter was sent." }
+    ];
+
+    function init() {
+        if (!state.setup) {
+            document.getElementById('setup-screen').classList.remove('hidden');
+        } else {
+            document.body.style.fontSize = state.font;
+            render();
+            renderGrammar();
+        }
+    }
+
+    function saveSetup() {
+        state.level = document.getElementById('lvl-select').value;
+        state.font = document.getElementById('font-select').value;
+        state.setup = true;
+        save();
+        location.reload();
+    }
+
+    function tab(name) {
+        ['tests', 'cards', 'grammar'].forEach(t => {
+            document.getElementById('view-' + t).classList.add('hidden');
+            document.getElementById('nav-' + t).classList.remove('active');
+        });
+        document.getElementById('view-' + name).classList.remove('hidden');
+        document.getElementById('nav-' + name).classList.add('active');
+    }
+
+    function render() {
+        const pool = content[state.level].s;
+        const cur = pool[state.index % pool.length];
+        document.getElementById('current-sentence').innerText = cur;
+        document.getElementById('p-text').innerText = `Sentence ${state.index + 1} / 500`;
+        document.getElementById('p-bar').style.width = `${(state.index / 500) * 100}%`;
+        
+        const words = content[state.level].w;
+        document.getElementById('card-text').innerText = words[0];
+    }
+
+    function check() {
+        const input = document.getElementById('answer-input').value.toLowerCase().trim();
+        const feedback = document.getElementById('feedback');
+        
+        // Demo logic: in a real app, you'd have a mapping. 
+        // Here we just accept "test" as correct for the demo.
+        if(input.length > 0) {
+            feedback.innerText = "✓ Correct";
+            feedback.style.color = "green";
+            setTimeout(() => {
+                state.index++;
+                save();
+                document.getElementById('answer-input').value = "";
+                feedback.innerText = "";
+                render();
+            }, 1000);
+        }
+    }
+
+    function nextCard(known) {
+        const words = content[state.level].w;
+        const word = words.shift();
+        if(!known) words.push(word);
+        document.getElementById('card-text').innerText = words[0] || "Finished!";
+    }
+
+    function renderGrammar() {
+        const html = grammar.map(g => `
+            <div class="lesson">
+                <h3>${g.t}</h3>
+                <p>${g.d}</p>
+                <div class="example">${g.e}</div>
+            </div>
+        `).join('');
+        document.getElementById('grammar-list').innerHTML = html;
+    }
+
+    function handleKey(e) { if(e.key === 'Enter') check(); }
+    function save() { localStorage.setItem('eng_app', JSON.stringify(state)); }
+
+    init();
+</script>
+</body>
+</html>
